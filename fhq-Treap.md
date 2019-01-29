@@ -397,6 +397,335 @@ void del(int &root,int a)//为了可持久化，除了split和merge以外的每�
 
 ## 最终代码 <span id="1.5">
 
+[普通平衡树](https://www.luogu.org/problemnew/show/P3369)
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+const int N=100005;
+int ch[N][5],val[N],dat[N],sz[N],root,tot,x,y,z;
+void update(int n)
+{
+	sz[n]=1+sz[ch[n][0]]+sz[ch[n][1]];
+}
+void split(int now,int k,int &x,int &y)
+{
+	if (!now) x=y=0;
+	else if (val[now]<=k)
+	{
+		x=now;
+		split(ch[now][1],k,ch[now][1],y);
+		update(now);
+	}
+	else 
+	{
+		y=now;
+		split(ch[now][0],k,x,ch[now][0]);
+		update(now);
+	}
+}
+int merge(int x,int y)
+{
+	if (!x||!y) return x+y;
+	if (dat[x]<dat[y])
+	{
+		ch[x][1]=merge(ch[x][1],y);
+		update(x);
+		return x;
+	}
+	else
+	{
+		ch[y][0]=merge(x,ch[y][0]);
+		update(y);
+		return y;
+	}
+}
+int new_node(int a)
+{
+	sz[++tot]=1,val[tot]=a,dat[tot]=rand();
+	return tot;
+}
+void insert(int a)
+{
+	split(root,a,x,y);
+	root=merge(merge(x,new_node(a)),y);
+}
+void del(int a)
+{
+	split(root,a,x,z);
+	split(x,a-1,x,y);
+	y=merge(ch[y][0],ch[y][1]);
+	root=merge(merge(x,y),z);
+}
+int rank(int root,int a)
+{
+	split(root,a-1,x,y);
+	int ans=sz[x]+1;
+	merge(x,y);
+	return ans;
+}
+int kth(int root,int k)
+{
+	if (k==sz[ch[root][0]]+1) return root;
+	if (k<=sz[ch[root][0]]) return kth(ch[root][0],k);
+	else return kth(ch[root][1],k-sz[ch[root][0]]-1);
+}
+int pre(int a)
+{
+	split(root,a-1,x,y);
+	int ans=val[kth(x,sz[x])];
+	root=merge(x,y);
+	return ans;
+}
+int pst(int a)
+{
+	split(root,a,x,y);
+	int ans=val[kth(y,1)];
+	root=merge(x,y);
+	return ans;
+}
+int main()
+{
+    srand(time(0));
+	int n;
+    cin>>n;
+    while(n--)
+    {
+        int opt,a;
+        cin>>opt>>a;
+        if(opt==1) insert(a);
+        else if(opt==2) del(a);
+        else if(opt==3) cout<<rank(root,a)<<endl;
+        else if(opt==4) cout<<val[kth(root,a)]<<endl;
+        else if(opt==5) cout<<pre(a)<<endl;
+        else cout<<pst(a)<<endl;
+    }
+    return 0;
+}
+```
+
+[文艺平衡树](https://www.luogu.org/problemnew/show/P3391)
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+const int N=100005;
+int ch[N][5],val[N],dat[N],sz[N],tag[N],root,tot,x,y,z;
+void read(int &n)
+{
+	int fh=1,ans;
+	char c;
+	while (!isdigit(c=getchar())) if (c=='-') fh=-1;
+	ans=c-48;
+	while (isdigit(c=getchar())) ans=ans*10+c-48;
+	n=ans*fh;
+}
+void down(int x)
+{
+	swap(ch[x][0],ch[x][1]);
+	if (ch[x][0]) tag[ch[x][0]]^=1;
+	if (ch[x][1]) tag[ch[x][1]]^=1;
+	tag[x]=0;
+}
+void update(int n)
+{
+	sz[n]=1+sz[ch[n][0]]+sz[ch[n][1]];
+}
+void split(int now,int k,int &x,int &y)
+{
+	if (!now) {x=y=0;return;}
+	if (tag[now]) down(now);
+	if (sz[ch[now][0]]<k)
+	{
+		x=now;
+		split(ch[now][1],k-sz[ch[now][0]]-1,ch[now][1],y);
+	}
+	else 
+	{
+		y=now;
+		split(ch[now][0],k,x,ch[now][0]);
+	}
+	update(now);
+}
+int merge(int x,int y)
+{
+	if (!x||!y) return x+y;
+	if (dat[x]<dat[y])
+	{
+		if (tag[x]) down(x);
+		ch[x][1]=merge(ch[x][1],y);
+		update(x);
+		return x;
+	}
+	else
+	{
+		if (tag[y]) down(y);
+		ch[y][0]=merge(x,ch[y][0]);
+		update(y);
+		return y;
+	}
+}
+int new_node(int a)
+{
+	sz[++tot]=1,val[tot]=a,dat[tot]=rand();
+	return tot;
+}
+void rev(int l,int r)
+{
+	split(root,l-1,x,y);
+	split(y,r-l+1,y,z);
+	tag[y]^=1;
+	root=merge(x,merge(y,z));
+}
+void print(int now)
+{
+	if (!now) return;
+	if (tag[now]) down(now);
+	print(ch[now][0]);
+	printf("%d ",val[now]);
+	print(ch[now][1]);
+}
+int main()
+{
+    srand(time(0));
+	int n,m;
+	read(n),read(m);
+	for (int i=1;i<=n;i++) root=merge(root,new_node(i));
+	for (int i=0;i<=n;i++) printf("%d %d %d %d %d\n",ch[i][0],ch[i][1],sz[i],val[i],dat[i]);
+	for (int i=1;i<=m;i++)
+	{
+		int l,r;
+		read(l),read(r);
+		rev(l,r);
+	}
+	print(root);
+    return 0;
+}
+
+```
+
+[可持久化平衡树](https://www.luogu.org/problemnew/show/P3835)
+
+```c++
+#include <bits/stdc++.h>
+using namespace std;
+const int N=500005;
+int ch[N<<4][5],val[N<<4],dat[N<<4],sz[N<<4],root[N],tot,x,y,z;
+void update(int n)
+{
+	sz[n]=1+sz[ch[n][0]]+sz[ch[n][1]];
+}
+void copy(int x,int y)
+{
+	ch[x][0]=ch[y][0],ch[x][1]=ch[y][1],val[x]=val[y],dat[x]=dat[y],sz[x]=sz[y];
+}
+void split(int now,int k,int &x,int &y)
+{
+	if (!now) x=y=0;
+	else if (val[now]<=k)
+	{
+		x=++tot;
+		copy(x,now);
+		split(ch[x][1],k,ch[x][1],y);
+		update(x);
+	}
+	else 
+	{
+		y=++tot;
+		copy(y,now);
+		split(ch[y][0],k,x,ch[y][0]);
+		update(y);
+	}
+}
+int merge(int x,int y)
+{
+	if (!x||!y) return x+y;
+	if (dat[x]<dat[y])
+	{
+		int p=++tot;
+		copy(p,x);
+		ch[p][1]=merge(ch[p][1],y);
+		update(p);
+		return p;
+	}
+	else
+	{
+		int p=++tot;
+		copy(p,y);
+		ch[p][0]=merge(x,ch[p][0]);
+		update(p);
+		return p;
+	}
+}
+int new_node(int a)
+{
+	sz[++tot]=1,val[tot]=a,dat[tot]=rand();
+	return tot;
+}
+void insert(int &root,int a)
+{
+	split(root,a,x,y);
+	root=merge(merge(x,new_node(a)),y);
+}
+void del(int &root,int a)
+{
+	split(root,a,x,z);
+	split(x,a-1,x,y);
+	y=merge(ch[y][0],ch[y][1]);
+	root=merge(merge(x,y),z);
+}
+int rank(int &root,int a)
+{
+	split(root,a-1,x,y);
+	int ans=sz[x]+1;
+	merge(x,y);
+	return ans;
+}
+int kth(int &root,int k)
+{
+	if (k==sz[ch[root][0]]+1) return root;
+	if (k<=sz[ch[root][0]]) return kth(ch[root][0],k);
+	else return kth(ch[root][1],k-sz[ch[root][0]]-1);
+}
+int pre(int &root,int a)
+{
+	split(root,a-1,x,y);
+	if (!x) return -2147483647;
+	int ans=val[kth(x,sz[x])];
+	root=merge(x,y);
+	return ans;
+}
+int pst(int &root,int a)
+{
+	split(root,a,x,y);
+	if (!y) return 2147483647;
+	int ans=val[kth(y,1)];
+	root=merge(x,y);
+	return ans;
+}
+int main()
+{
+    srand(time(0));
+	int n;
+    cin>>n;
+    for (int i=1;i<=n;i++)
+    {
+        int v,opt,a;
+        cin>>v>>opt>>a;
+        root[i]=root[v];
+        if(opt==1) insert(root[i],a);
+        else if(opt==2) del(root[i],a);
+        else if(opt==3) cout<<rank(root[i],a)<<endl;
+        else if(opt==4) cout<<val[kth(root[i],a)]<<endl;
+        else if(opt==5) cout<<pre(root[i],a)<<endl;
+        else cout<<pst(root[i],a)<<endl;
+    }
+    return 0;
+}
+```
+
+[可持久化文艺平衡树](https://www.luogu.org/problemnew/show/P5055)
+
 ```c++
 #include <bits/stdc++.h>
 using namespace std;
