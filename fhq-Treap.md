@@ -197,7 +197,7 @@ int new_node(int a)//新建节点
 void insert(int a)
 {
 	split(root,a,x,y);//把小于等于a的节点放在x，大于a的节点放在y，用权值分裂
-	root=merge(merge(x,new_node(a)),y);把x，a，和y拼起来
+	root=merge(merge(x,new_node(a)),y);//把x，a，和y拼起来
 }
 ```
 
