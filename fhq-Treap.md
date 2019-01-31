@@ -1,3 +1,5 @@
+<title>fhq Treap</title>
+
 ## 目录 <span id="home">
 
 * **[fhq Treap](#1)**
@@ -872,3 +874,4 @@ int main()
 
 ```
 
+[返回顶部](#home)
