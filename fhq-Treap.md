@@ -1,4 +1,4 @@
-**目录<span id="home">**
+**目录**<span id="home">
 
 * **[fhq Treap](#1)**
 	* **[原理](#1.1)**
